@@ -1,5 +1,5 @@
 use crate::{
-    components::{Bird, Carnivore, Energy, Herbivore},
+    components::{Bird, Carnivore, Energy, Herb, Herbivore},
     BOUNDS,
 };
 use bevy::prelude::*;
@@ -67,6 +67,45 @@ pub fn herbivore_flock_movement(
             bird.desired_direction += alignment.normalize_or_zero()
                 + 0.1 * cohesion.normalize_or_zero()
                 + 5.0 * -separation.normalize_or_zero();
+        });
+}
+
+pub fn herbivore_feed(
+    mut commands: Commands,
+    mut herbivore_query: Query<(&Transform, &mut Bird, &mut Energy), With<Herbivore>>,
+    herb_query: Query<(Entity, &Transform, &Herb)>,
+) {
+    herbivore_query
+        .iter_mut()
+        .for_each(|(transform, mut bird, mut energy)| {
+            if energy.value >= energy.max * 0.95 {
+                return;
+            }
+
+            let closest_herb_in_vision_range = herb_query
+                .iter()
+                .map(|(herb_entity, herb_transform, herb)| {
+                    let distance = (herb_transform.translation - transform.translation).length();
+                    (herb_entity, herb_transform, herb, distance)
+                })
+                .filter(|(_, _, _, distance)| *distance < bird.vision_range)
+                .min_by(|(_, _, _, distance_a), (_, _, _, distance_b)| {
+                    distance_a.partial_cmp(distance_b).unwrap()
+                });
+
+            if let Some((herb_entity, herb_transform, herb, distance)) =
+                closest_herb_in_vision_range
+            {
+                bird.desired_direction +=
+                    2. * (herb_transform.translation - transform.translation).normalize_or_zero();
+
+                if distance < 20. {
+                    energy.value += herb.value;
+                    energy.value = energy.value.min(energy.max);
+
+                    commands.get_entity(herb_entity).unwrap().despawn();
+                }
+            }
         });
 }
 

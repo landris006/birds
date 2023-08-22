@@ -1,4 +1,7 @@
-use bevy::prelude::{Component, Vec3};
+use bevy::{
+    prelude::{Component, Resource, Vec3},
+    time::Timer,
+};
 
 #[derive(Component, Clone, Copy)]
 pub struct Bird {
@@ -17,4 +20,14 @@ pub struct Carnivore;
 pub struct Energy {
     pub value: f32,
     pub max: f32,
+}
+
+#[derive(Component)]
+pub struct Herb {
+    pub value: f32,
+}
+
+#[derive(Resource)]
+pub struct HerbSpawnConfig {
+    pub timer: Timer,
 }

@@ -1,8 +1,10 @@
+use std::time::Duration;
+
 use bevy::{core_pipeline::bloom::BloomSettings, prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
 use crate::{
-    components::{Bird, Carnivore, Energy, Herbivore},
+    components::{Bird, Carnivore, Energy, Herb, HerbSpawnConfig, Herbivore},
     BIRDS_TO_SPAWN, BOUNDS,
 };
 
@@ -20,12 +22,13 @@ pub fn setup(
 
             ..default()
         },
-        // BloomSettings::default(),
+        BloomSettings::default(),
     ));
 
     let mesh_handle = meshes.add(shape::RegularPolygon::new(10., 3).into());
     let material_handle = materials.add(ColorMaterial::from(Color::hsl(180., 1.0, 0.5)));
 
+    // spawn herbivores
     let batch = (0..BIRDS_TO_SPAWN).map(move |_| {
         let mut rng = rand::thread_rng();
         let random_rotation = Quat::from_rotation_z(rng.gen_range(0.0..std::f32::consts::PI * 2.0));
@@ -59,6 +62,31 @@ pub fn setup(
     });
     commands.spawn_batch(batch);
 
+    let herb_mesh_handle = meshes.add(shape::Circle::new(3.).into());
+    let herb_material_handle = materials.add(ColorMaterial::from(Color::hsl(120., 1.0, 0.5)));
+    // spawn herbs
+    let batch = (0..100).map(move |_| {
+        let mut rng = rand::thread_rng();
+        (
+            MaterialMesh2dBundle {
+                mesh: Handle::clone(&herb_mesh_handle).into(),
+                material: Handle::clone(&herb_material_handle),
+                transform: Transform {
+                    translation: Vec3::new(
+                        rng.gen_range(-BOUNDS.x / 2.0..BOUNDS.x / 2.0),
+                        rng.gen_range(-BOUNDS.y / 2.0..BOUNDS.y / 2.0),
+                        0.,
+                    ),
+                    ..default()
+                },
+                ..default()
+            },
+            Herb { value: 10. },
+        )
+    });
+    commands.spawn_batch(batch);
+
+    // spawn carnivores
     let mut rng = rand::thread_rng();
     commands
         .spawn(MaterialMesh2dBundle {
@@ -83,9 +111,45 @@ pub fn setup(
 pub fn energy_drain(time: Res<Time>, mut query: Query<(&mut Energy, &Bird)>) {
     query.iter_mut().for_each(|(mut energy, bird)| {
         energy.value -= time.delta_seconds() * bird.speed / 100.;
-
-        dbg!(energy);
     });
+}
+
+pub fn setup_herb_spawner(mut commands: Commands) {
+    commands.insert_resource(HerbSpawnConfig {
+        timer: Timer::from_seconds(1.0, TimerMode::Repeating),
+    });
+}
+
+pub fn spawn_herbs(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut herb_spaw_config: ResMut<HerbSpawnConfig>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+) {
+    herb_spaw_config
+        .timer
+        .tick(Duration::from_secs_f32(time.delta_seconds()));
+
+    if herb_spaw_config.timer.just_finished() {
+        let mut rng = rand::thread_rng();
+        commands.spawn((
+            MaterialMesh2dBundle {
+                mesh: meshes.add(shape::Circle::new(3.).into()).into(),
+                material: materials.add(ColorMaterial::from(Color::hsl(120., 1.0, 0.5))),
+                transform: Transform {
+                    translation: Vec3::new(
+                        rng.gen_range(-BOUNDS.x / 2.0..BOUNDS.x / 2.0),
+                        rng.gen_range(-BOUNDS.y / 2.0..BOUNDS.y / 2.0),
+                        0.,
+                    ),
+                    ..default()
+                },
+                ..default()
+            },
+            Herb { value: 10. },
+        ));
+    }
 }
 
 pub fn draw_gizmos(mut gizmos: Gizmos, birds: Query<(&Transform, &Bird)>) {

@@ -12,6 +12,7 @@ use systems::*;
 
 pub const BOUNDS: Vec2 = Vec2::new(1800., 900.);
 pub const BIRDS_TO_SPAWN: i32 = 10;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -25,18 +26,21 @@ fn main() {
         // .add_plugins(LogDiagnosticsPlugin::default())
         // .add_plugins(FrameTimeDiagnosticsPlugin)
         .insert_resource(ClearColor(Color::rgb(0.1, 0.1, 0.1)))
-        .add_systems(Startup, setup)
+        .add_systems(Startup, (setup, setup_herb_spawner))
         .add_systems(
             Update,
             (
+                move_birds_forward,
                 herbivore_flock_movement,
+                keep_birds_in_bounds,
+                herbivore_feed,
                 herbivore_flee,
                 carnivore_movement,
-                keep_birds_in_bounds,
-                move_birds_forward,
-                draw_gizmos,
                 energy_drain,
                 zero_energy_dies,
+                spawn_herbs,
+                // utils
+                draw_gizmos,
                 bevy::window::close_on_esc,
             ),
         )
