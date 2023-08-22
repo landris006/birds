@@ -65,7 +65,7 @@ pub fn herbivore_flock_movement(
                 });
 
             bird.desired_direction += alignment.normalize_or_zero()
-                + 0.1 * cohesion.normalize_or_zero()
+                + cohesion.normalize_or_zero()
                 + 5.0 * -separation.normalize_or_zero();
         });
 }
@@ -139,16 +139,31 @@ pub fn herbivore_flee(
 
 pub fn carnivore_movement(
     mut commands: Commands,
-    mut carnivore_query: Query<(&Transform, &mut Bird, &mut Energy), With<Carnivore>>,
+    mut carnivore_query: Query<(Entity, &Transform, &mut Bird, &mut Energy), With<Carnivore>>,
     herbivore_query: Query<(Entity, &Transform), With<Herbivore>>,
 ) {
+    let carvinores = carnivore_query
+        .iter()
+        .map(|(e, t, _, _)| (e, *t))
+        .collect::<Vec<_>>();
+
     carnivore_query
         .iter_mut()
-        .for_each(|(transform, mut carnivore, mut energy)| {
+        .for_each(|(entity, transform, mut carnivore, mut energy)| {
             if energy.value >= energy.max * 0.95 {
                 carnivore.speed = 100.;
                 return;
             }
+
+            let separation = carvinores
+                .iter()
+                .filter(|(other_entity, t)| {
+                    *other_entity != entity
+                        && (t.translation - transform.translation).length() < carnivore.vision_range
+                })
+                .map(|(_, t)| t.translation - transform.translation)
+                .sum::<Vec3>();
+            carnivore.desired_direction -= separation.normalize_or_zero();
 
             let closest_herbivore_in_vision_range = herbivore_query
                 .iter()

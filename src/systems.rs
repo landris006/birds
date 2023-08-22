@@ -106,6 +106,24 @@ pub fn setup(
             value: 50.,
             max: 100.,
         });
+    commands
+        .spawn(MaterialMesh2dBundle {
+            mesh: meshes.add(shape::RegularPolygon::new(10., 3).into()).into(),
+            material: materials.add(ColorMaterial::from(Color::hsl(340., 1.0, 0.5))),
+            transform: Transform::from_translation(Vec3::new(0., 10., 0.)),
+            ..default()
+        })
+        .insert(Bird {
+            speed: 100.,
+            rotation_speed: 1.5,
+            vision_range: 150.,
+            desired_direction: Vec3::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0), 0.),
+        })
+        .insert(Carnivore)
+        .insert(Energy {
+            value: 50.,
+            max: 100.,
+        });
 }
 
 pub fn energy_drain(time: Res<Time>, mut query: Query<(&mut Energy, &Bird)>) {

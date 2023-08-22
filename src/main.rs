@@ -11,7 +11,7 @@ use movement::*;
 use systems::*;
 
 pub const BOUNDS: Vec2 = Vec2::new(1800., 900.);
-pub const BIRDS_TO_SPAWN: i32 = 10;
+pub const BIRDS_TO_SPAWN: i32 = 100;
 
 fn main() {
     App::new()
