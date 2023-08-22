@@ -16,7 +16,7 @@ pub struct Herbivore;
 #[derive(Component)]
 pub struct Carnivore;
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone, Copy)]
 pub struct Energy {
     pub value: f32,
     pub max: f32,

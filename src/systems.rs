@@ -55,7 +55,7 @@ pub fn setup(
             },
             Herbivore,
             Energy {
-                value: 100.,
+                value: 50.,
                 max: 100.,
             },
         )
@@ -103,7 +103,7 @@ pub fn setup(
         })
         .insert(Carnivore)
         .insert(Energy {
-            value: 100.,
+            value: 50.,
             max: 100.,
         });
 }
@@ -111,6 +111,75 @@ pub fn setup(
 pub fn energy_drain(time: Res<Time>, mut query: Query<(&mut Energy, &Bird)>) {
     query.iter_mut().for_each(|(mut energy, bird)| {
         energy.value -= time.delta_seconds() * bird.speed / 100.;
+    });
+}
+
+pub fn zero_energy_dies(mut commands: Commands, query: Query<(Entity, &Energy)>) {
+    query.for_each(|(entity, energy)| {
+        if energy.value <= 0. {
+            commands.entity(entity).despawn();
+        }
+    });
+}
+
+pub fn spawn_herbivore_offspring(
+    mut commands: Commands,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut query: Query<(&mut Energy, &Bird, &Transform), With<Herbivore>>,
+) {
+    query.iter_mut().for_each(|(mut energy, bird, transform)| {
+        if energy.value >= energy.max * 0.8 {
+            energy.value /= 2.;
+
+            commands.spawn((
+                MaterialMesh2dBundle {
+                    mesh: meshes.add(shape::RegularPolygon::new(10., 3).into()).into(),
+                    material: materials.add(ColorMaterial::from(Color::hsl(180., 1.0, 0.5))),
+                    transform: Transform {
+                        translation: transform.translation - transform.rotation * Vec3::Y * 10.,
+                        rotation: transform.rotation,
+                        ..default()
+                    },
+                    ..default()
+                },
+                *bird,
+                Herbivore,
+                Energy {
+                    value: 50.,
+                    max: 100.,
+                },
+            ));
+        }
+    });
+}
+
+pub fn spawn_carnivore_offspring(
+    mut commands: Commands,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut query: Query<(&mut Energy, &Bird, &Transform), With<Carnivore>>,
+) {
+    query.iter_mut().for_each(|(mut energy, bird, transform)| {
+        if energy.value >= energy.max * 0.8 {
+            energy.value /= 2.;
+
+            commands.spawn((
+                MaterialMesh2dBundle {
+                    mesh: meshes.add(shape::RegularPolygon::new(10., 3).into()).into(),
+                    material: materials.add(ColorMaterial::from(Color::hsl(340., 1.0, 0.5))),
+                    transform: Transform {
+                        translation: transform.translation - transform.rotation * Vec3::Y * 10.,
+                        rotation: transform.rotation,
+                        ..default()
+                    },
+                    ..default()
+                },
+                *bird,
+                Carnivore,
+                *energy,
+            ));
+        }
     });
 }
 

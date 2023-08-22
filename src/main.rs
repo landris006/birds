@@ -36,6 +36,8 @@ fn main() {
                 herbivore_feed,
                 herbivore_flee,
                 carnivore_movement,
+                spawn_herbivore_offspring,
+                spawn_carnivore_offspring,
                 energy_drain,
                 zero_energy_dies,
                 spawn_herbs,

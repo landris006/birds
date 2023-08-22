@@ -172,7 +172,7 @@ pub fn carnivore_movement(
                 carnivore.speed = 175.;
 
                 if distance < 20. {
-                    energy.value += 10.;
+                    energy.value += 20.;
                     energy.value = energy.value.min(energy.max);
 
                     commands.get_entity(herbivore_entity).unwrap().despawn();
@@ -181,14 +181,6 @@ pub fn carnivore_movement(
                 carnivore.speed = 100.;
             }
         })
-}
-
-pub fn zero_energy_dies(mut commands: Commands, query: Query<(Entity, &Energy)>) {
-    query.for_each(|(entity, energy)| {
-        if energy.value <= 0. {
-            commands.entity(entity).despawn();
-        }
-    });
 }
 
 pub fn keep_birds_in_bounds(mut query: Query<(&Transform, &mut Bird)>) {
